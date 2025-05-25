@@ -30,8 +30,8 @@ const App = () => {
   const load = async () => {
     try {
       const ffmpeg = ffmpegRef.current;
-      ffmpeg.on('log', (message) => {
-        console.log(message);
+      ffmpeg.on('log', ({ message }) => {
+        console.log('FFmpeg Log:', message);
       });
       ffmpeg.on('progress', ({ progress }) => {
         setProgress(Math.round(progress * 100));
@@ -115,43 +115,56 @@ const App = () => {
       const results = [];
 
       for(let i=0; i < selectedFiles.length; i++) {
-        setCurrentFileIndex(i);
-        setStatus(`正在处理第 ${i + 1}/${selectedFiles.length} 个视频：${selectedFiles[i].name}`);
-        setProgress(0);
+        try {
+          setCurrentFileIndex(i);
+          setStatus(`正在处理第 ${i + 1}/${selectedFiles.length} 个视频：${selectedFiles[i].name}`);
+          setProgress(0);
 
-        const inputFileName = `input_${i}.mp4`;
-        const outputFileName = `output_${i}.mp4`;
+          const inputFileName = `input_${i}.mp4`;
+          const outputFileName = `output_${i}.mp4`;
 
-        await ffmpeg.writeFile(inputFileName, await fetchFile(selectedFiles[i]));
+          console.log('Writing input file...');
+          await ffmpeg.writeFile(inputFileName, await fetchFile(selectedFiles[i]));
 
-        await ffmpeg.exec(
-          "-i", inputFileName,
-          "-vf", `scale=${targetWidth}:${targetHeight}`,
-          "-c:v", "libx264",
-          "-b:v", `${targetBitrate}k`,
-          "-maxrate", `${targetBitrate * 1.5}k`,
-          "-bufsize", `${targetBitrate * 2}k`,
-          "-preset", "medium",
-          outputFileName
-        );
+          console.log('Starting compression...');
+          await ffmpeg.exec([
+            "-i", inputFileName,
+            "-vf", `scale=${targetWidth}:${targetHeight}`,
+            "-c:v", "libx264",
+            "-b:v", `${targetBitrate}k`,
+            "-maxrate", `${targetBitrate * 1.5}k`,
+            "-bufsize", `${targetBitrate * 2}k`,
+            "-preset", "medium",
+            outputFileName
+          ]);
 
-        const data = ffmpeg.readFile(outputFileName);
-        const blob = new Blob([data], { type: "video/mp4" });
-        results.push({
-          originalName: selectedFiles[i].name,
-          data,
-          size: blob.size,
-        });
+          console.log('Reading output file...');
+          const data = await ffmpeg.readFile(outputFileName);
+          console.log('Output file size:', data.byteLength);
+          
+          const blob = new Blob([data], { type: "video/mp4" });
+          console.log('Blob size:', blob.size);
+          
+          results.push({
+            originalName: selectedFiles[i].name,
+            data: data,
+            size: blob.size,
+          });
 
-        //清理临时文件
-        await ffmpeg.deleteFile(inputFileName);
-        await ffmpeg.deleteFile(outputFileName);
+          //清理临时文件
+          await ffmpeg.deleteFile(inputFileName);
+          await ffmpeg.deleteFile(outputFileName);
+        } catch (error) {
+          console.error(`Error processing file ${i}:`, error);
+          setError(`处理第 ${i + 1} 个视频时出错：${error.message}`);
+          throw error;
+        }
       }
       setCompressedResults(results);
       setStatus("所有视频压缩完成");
     } catch (error) {
-      console.error("FFmpeg load error", error);
-      setError("初始视频时出错：" + error.message);
+      console.error("Compression error:", error);
+      setError("压缩视频时出错：" + error.message);
     } finally {
       setIsProcessing(false);
       setProgress(0);
@@ -190,7 +203,7 @@ const App = () => {
 
   return (
     <div className="container">
-      <h1>免费视频压缩工具</h1>
+      <h1 className="title">免费视频压缩工具</h1>
 
       <div className="upload-section">
         <input
@@ -206,7 +219,7 @@ const App = () => {
           <label htmlFor="file-input" className="button upload-button">
             {selectedFiles.length > 0 ? `已选择 ${selectedFiles.length} 个文件` : '选择视频文件'}
           </label>
-          <div className="file-hint">提示：可以同时选择多个视频文件进行批量压缩</div>
+          <div className="upload-hint">提示：可以同时选择多个视频文件进行批量压缩</div>
         </div>
         {
           selectedFiles.length > 0 && (
@@ -242,7 +255,6 @@ const App = () => {
                 onChange={(e) => setTargetWidth(e.target.value)}
                 disabled={isProcessing}
                 className="input-field"
-                disabled={isProcessing}
               />
             </label>
             <label>

@@ -2,7 +2,6 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
-const { buffer } = require('stream/consumers');
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -45,7 +44,7 @@ module.exports = {
   },
   devServer: {
     port: 3000,
-    allowedHosts: 'all',
+    allowedHosts: ['all', 'localhost'],
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp"
@@ -98,8 +97,8 @@ module.exports = {
             comments: false,
             ascii_only: true,
           },
-          parallel: true,
-        }
+        },
+        parallel: true,
       })
     ],
     splitChunks: {
