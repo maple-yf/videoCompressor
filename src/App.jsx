@@ -226,16 +226,18 @@ const App = () => {
             <div className="selected-files">
               {
                 selectedFiles.map((file, index) => {
-                  <div key={index} className="selected-file">
-                    <span className="file-name">{file.name}</span>
-                    {
-                      currentFileIndex === index && (
-                        <div className="file-progress">
-                          <div className="file-progress-bar" style={{  width: `${progress}%` }} />
-                        </div>
-                      )
-                    }
-                  </div>
+                  return (
+                    <div key={index} className="selected-file">
+                      <span className="file-name">{file.name}</span>
+                      {
+                        currentFileIndex === index && (
+                          <div className="file-progress">
+                            <div className="file-progress-bar" style={{  width: `${progress}%` }} />
+                          </div>
+                        )
+                      }
+                    </div>
+                  );
                 })
               }
             </div>
@@ -376,7 +378,7 @@ const App = () => {
                               <span className="info-label">压缩码率：</span>
                               <span className="info-value">{targetBitrate} kbps</span>
                             </div>
-                            <div className="info-item">
+                            <div className="info-item highlight">
                               <span className="info-label">体积减少：</span>
                               <span className="info-value">
                                 {((1 - compressedResult.size / videoInfo.size) * 100).toFixed(2)}%

@@ -204,6 +204,10 @@ label {
   transition: width 0.3s ease;
 }
 
+.compressed-files {
+  margin-top: 20px;
+}
+
 .compressed-file {
   display: flex;
   justify-content: space-between;
