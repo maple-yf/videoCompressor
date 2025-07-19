@@ -1,12 +1,11 @@
 import React, { useState, useRef, useMemo } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { toBlobURL, fetchFile } from "@ffmpeg/util";
+import { fetchFile } from "@ffmpeg/util";
 
 const App = () => {
   const [targetWidth, setTargetWidth] = useState(384);
   const [targetHeight, setTargetHeight] = useState(192);
   const [targetBitrate, setTargetBitrate] = useState(100);
-  const [originalBitrate, setOriginalBitrate] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
@@ -63,7 +62,6 @@ const App = () => {
         const estimatedBitrate = Math.round((file.size * 8) / video.duration);
         // 设置目标码率为100kbps
         setTargetBitrate(100);
-        setOriginalBitrate(Math.round(estimatedBitrate / 1000));
 
         resolve({
           duration: video.duration,
@@ -327,6 +325,8 @@ const App = () => {
       </div>
 
       {status && <div className="status">{status}</div>}
+
+      {error && <div className="error-message">{error}</div>}
 
       {
         videoInfos.length > 0 && (
